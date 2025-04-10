@@ -1,5 +1,6 @@
-import rclpy
-from rclpy.node import Node
+#!/usr/bin/env python3
+
+import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
@@ -10,15 +11,17 @@ from matplotlib import pyplot as plt
 def nothing(x):
     pass
 
-class ImageProcessor(Node):
+class ImageProcessor():
     def __init__(self):
-        super().__init__('image_processor')
-        self.declare_parameter('image_file', 'image.PNG')
-        self.timer = self.create_timer(0.2, self.timer_callback)
-        self.pub = self.create_publisher(Image, 'processed_image', 10)
-        file_loc = self.get_parameter('image_file').get_parameter_value().string_value
-        print("Loading image from " + file_loc)
-        self.image = cv2.imread(file_loc)
+        self.timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback)
+        self.pub = rospy.Publisher('processed_image',Image, queue_size=10)
+        try:
+            file_loc = rospy.get_param('/image_file')
+            print("Loading image from " + file_loc)
+            self.image = cv2.imread(file_loc)
+        except AttributeError:
+            print("No param set for image file location")
+        
         self.br = CvBridge()
 
         cv2.namedWindow('Original image', cv2.WINDOW_AUTOSIZE)
@@ -45,7 +48,7 @@ class ImageProcessor(Node):
         self.hMin = self.sMin = self.vMin = self.hMax = self.sMax = self.vMax = 0
         self.phMin = self.psMin = self.pvMin = self.phMax = self.psMax = self.pvMax = 0
 
-    def timer_callback(self):
+    def timer_callback(self, _):
         ## process stuff
         print('Doing stuff')
         cv2.imshow("Original image", self.image)
@@ -175,15 +178,10 @@ class ImageProcessor(Node):
         cv2.waitKey(1)
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    image_processor = ImageProcessor()
-    rclpy.spin(image_processor)
-    image_processor.destroy_node()
-    rclpy.shutdown()
-
 if __name__ == '__main__':
-    main()
+    rospy.init_node("image_processor", anonymous=True)
+    image_processor = ImageProcessor()
+    rospy.spin()
 
 
 
