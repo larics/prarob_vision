@@ -16,7 +16,7 @@ class ImageProcessor():
         self.timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback)
         self.pub = rospy.Publisher('processed_image',Image, queue_size=10)
         try:
-            file_loc = rospy.get_param('/image_file')
+            file_loc = rospy.get_param('~image_file')
             print("Loading image from " + file_loc)
             self.image = cv2.imread(file_loc)
         except AttributeError:
